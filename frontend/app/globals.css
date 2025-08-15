@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import "tailwindcss/preflight";
+
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+@tailwind utilities;
+
+@layer utilities {
+  /* Container override */
+  .container {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 100% !important;
+  }
+
+  @media (min-width: 1536px) {
+    .container {
+      max-width: 1480px !important;
+      padding-left: 4rem !important;
+      padding-right: 4rem !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+  }
+
+  /* Color overrides */
+  .text-primary {
+    color: var(--primary) !important;
+  }
+
+  .text-accent {
+    color: var(--accent) !important;
+  }
+
+  .bg-tertiary {
+    background-color: var(--background-tertiary, #f9fafb) !important;
+  }
+
+  .bg-testpink {
+    background-color: pink !important;
+  }
+
+  /* Theme variables */
+  :root {
+    --radius: 0.625rem;
+    --primary: #1d4ed8;
+    --primary-foreground: #ffffff;
+    --accent: #f59e0b;
+    --accent-foreground: #1f2937;
+    --background: #ffffff;
+    --foreground: #111827;
+    --background-tertiary: #f9fafb;
+  }
+
+  .dark {
+    --background: #111827;
+    --foreground: #f9fafb;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --accent: #fbbf24;
+    --accent-foreground: #1f2937;
+    --background-tertiary: #1f2937;
+  }
+}
+
+@layer base {
+  h1 {
+    @apply text-4xl md:text-6xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+}
