@@ -1,7 +1,6 @@
-@import "tailwindcss";
 @import "tailwindcss/preflight";
-
-@import "tw-animate-css";
+@import "tailwindcss/utilities";
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 @tailwind utilities;
@@ -44,7 +43,7 @@
   }
 
   /* Theme variables */
-  :root {
+  @theme {
     --radius: 0.625rem;
     --primary: #1d4ed8;
     --primary-foreground: #ffffff;
@@ -67,15 +66,54 @@
 }
 
 @layer base {
-  h1 {
-    @apply text-4xl md:text-6xl font-bold tracking-tight;
+  :root {
+    --radius: 0.625rem;
+    --primary: #1d4ed8;
+    --primary-foreground: #ffffff;
+    --accent: #f59e0b;
+    --accent-foreground: #1f2937;
+    --background: #ffffff;
+    --foreground: #111827;
+    --background-tertiary: #f9fafb;
   }
 
-  h2 {
-    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+  .dark {
+    --background: #111827;
+    --foreground: #f9fafb;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --accent: #fbbf24;
+    --accent-foreground: #1f2937;
+    --background-tertiary: #1f2937;
   }
 
-  p {
-    @apply leading-relaxed;
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] antialiased;
+  }
+}
+
+@layer utilities {
+  /* Container override */
+  .container {
+    @apply mx-auto px-8 max-w-full;
+  }
+
+  @media (min-width: 1536px) {
+    .container {
+      @apply max-w-[1480px] px-16 mx-auto;
+    }
+  }
+
+  /* Color helpers */
+  .text-primary {
+    color: var(--primary) !important;
+  }
+
+  .text-accent {
+    color: var(--accent) !important;
+  }
+
+  .bg-tertiary {
+    background-color: var(--background-tertiary) !important;
   }
 }
