@@ -29,14 +29,14 @@ const Header = async () => {
   console.log("user from header", user);
 
   return (
-    <header className=" py-6 shadow-md ">
+    <header className=" py-6 shadow-md bg-slate-900 text-white">
       <div className="container mx-auto">
         <div className="flex flex-col md:flex-row md:justify-between gap-6">
           {/* logo and social icons*/}
           <div className="flex items-center gap-5 justify-between">
             {/* logo*/}
             <Link href={"/"}>
-              <Image src="/logo.svg" width={160} height={160} alt="logo" />
+              <Image src="/TheBooker.png" width={160} height={160} alt="logo" />
             </Link>
             {/* seperator*/}
             <div className="w-[1px] h-[40px] bg-gray-300"></div>

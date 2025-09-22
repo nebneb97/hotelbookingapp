@@ -1,3 +1,5 @@
+import Reservation from "@/components/Reservation";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import Image from "next/image";
 import { TbArrowsMaximize, TbUsers } from "react-icons/tb";
 
@@ -8,7 +10,7 @@ const getRoomData = async (params: any) => {
   // Debug: Log the params to ensure the correct documentId is being passed
   console.log("RoomDetails params:", params);
 
-  // Fetch by documentId, not numeric id
+  // Fetch by documentId
   const res = await fetch(
     `http://127.0.0.1:1337/api/rooms?filters[documentId][$eq]=${params.id}&populate=*`,
     { next: { revalidate: 0 } }
@@ -21,11 +23,22 @@ const getRoomData = async (params: any) => {
   return json;
 };
 
+const getReservationData = async () => {
+  const res = await fetch(`http://127.0.0.1:1337/api/reservations?populate=*`, {
+    next: { revalidate: 0 },
+  });
+  return await res.json();
+};
+
 const RoomDetails = async ({ params }: { params: any }) => {
   // Defensive: Await params if it's a Promise
   if (typeof params?.then === "function") params = await params;
 
   const roomRes = await getRoomData(params);
+  const reservationRes = await getReservationData();
+  const { isAuthenticated, getUser } = getKindeServerSession();
+  const isUserAuthenticated = await isAuthenticated();
+  const userData = await getUser();
 
   // Handle the response structure - your API returns array format for filtering
   if (!roomRes.data || roomRes.data.length === 0) {
@@ -47,16 +60,9 @@ const RoomDetails = async ({ params }: { params: any }) => {
       </section>
     );
   }
-
-  // FIXED: Your filtering API returns array format { data: [room] }, not single object
   const room = roomRes.data[0];
 
-  // Debug: Let's see what we're actually getting
-  console.log("🏠 Room object structure:", room);
-  console.log("🏠 Room title:", room?.title);
-  console.log("🏠 Room description:", room?.description);
-
-  // FIXED: Handle the image structure correctly
+  // Handle the image structure
   let imgURL = "/assets/Code Kid.jpg";
   if (room.image?.url) {
     imgURL = `http://127.0.0.1:1337${room.image.url}`;
@@ -72,7 +78,7 @@ const RoomDetails = async ({ params }: { params: any }) => {
               <Image
                 src={imgURL}
                 fill
-                alt=''
+                alt=""
                 // width={700}
                 // height={500}
                 className="object-cover"
@@ -117,8 +123,13 @@ const RoomDetails = async ({ params }: { params: any }) => {
             </div>
           </div>
           {/* Reservation Section */}
-          <div className="w-full lg:max-w-[360px] h-max bg-green-300 flex items-center justify-center">
-            <span>Reservation</span>
+          <div className="w-full lg:max-w-[360px] h-max">
+            <Reservation
+              reservations={reservationRes}
+              room={room}
+              isUserAuthenticated={isUserAuthenticated}
+              userData={userData}
+            />
           </div>
         </div>
       </div>

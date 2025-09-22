@@ -122,7 +122,7 @@ const RoomList = ({ rooms }: { rooms: any }) => {
                 </Link>
 
                 <p className="text-lg font-semibold text-accent">
-                  ${room.price}{" "}
+                  RM {room.price}{" "}
                   <span className="text-gray-500 text-sm">/night</span>
                 </p>
               </div>

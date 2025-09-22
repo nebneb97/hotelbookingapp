@@ -24,7 +24,7 @@ const links = [
     path: "/",
   },
   {
-    name: "Contact",
+    name: "Contact Us",
     path: "/",
   },
 ];
@@ -32,17 +32,17 @@ const links = [
 const MobileNav = () => {
   return (
     <Sheet>
-      <SheetTrigger className="text-2xl text-black flex items-center">
+      <SheetTrigger className="text-2xl text-white flex items-center">
         <FaBars />
       </SheetTrigger>
-      <SheetContent side="left" className="bg-white flex justify-center items-center">
+      <SheetContent side="left" className="bg-slate-900 flex justify-center items-center">
         <nav className="flex flex-col gap-8 text-center">
           {links.map((link, index) => {
             return (
               <Link
                 href={link.path}
                 key={index}
-                className="text-2xl font-primary hover:text-orange-600"
+                className="text-2xl text-white font-primary hover:text-orange-600"
               >
                 {link.name}
               </Link>

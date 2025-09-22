@@ -116,4 +116,8 @@
   .bg-tertiary {
     background-color: var(--background-tertiary) !important;
   }
+
+  .bg-hero {
+    background-image: url('/hero/bg.jpg');
+  }
 }
