@@ -31,6 +31,7 @@ const postData = async (url: string, data: object) => {
     return data;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 
@@ -59,17 +60,18 @@ const Reservation = ({
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      return setAlertMessage(null);
-    }, 30000);
+    if (alertMessage) {
+      const timer = setTimeout(() => {
+        setAlertMessage(null);
+      }, 5000);
 
-    //clear timer
-
-    return () => clearTimeout(timer);
+      return () => clearTimeout(timer);
+    }
   }, [alertMessage]);
 
-  const saveReservation = () => {
+  const saveReservation = async () => {
     setAlertMessage(null);
+
     // Validate that both dates are selected
     if (!checkInDate || !checkOutDate) {
       setAlertMessage({
@@ -79,9 +81,9 @@ const Reservation = ({
       return;
     }
 
-    if (checkInDate?.getTime() === checkOutDate?.getTime()) {
-      return setAlertMessage({
-        message: "Check-in and check-out dates cannot be the same",
+    if (checkInDate.getTime() >= checkOutDate.getTime()) {
+      setAlertMessage({
+        message: "Check-out date must be after check-in date",
         type: "error",
       });
       return;
@@ -89,71 +91,97 @@ const Reservation = ({
 
     console.log("Reservation saved:", { checkInDate, checkOutDate });
 
-    const isReserved = reservations.data
-      .filter((item: any) => item.attributes.room.data.id === room.id)
-      .some((item: any) => {
-        const existingCheckIn = new Date(item.attributes.checkIn).setHours(
-          0,
-          0,
-          0,
-          0
-        ); //convert existing check-in date to midnight
-        const existingCheckOut = new Date(item.attributes.checkOut).setHours(
-          0,
-          0,
-          0,
-          0
-        ); //convert existing check-out date to midnight
+    // Add safety checks for reservations data
+    if (!reservations?.data || !Array.isArray(reservations.data)) {
+      console.log("No reservations data available");
+      // Proceed with booking since no existing reservations to check
+    } else {
+      // Check for existing reservations with comprehensive safety checks
+      const isReserved = reservations.data
+        .filter((item: any) => {
+          // Safety check: ensure all required properties exist
+          return (
+            item?.attributes?.room?.data?.id &&
+            item.attributes.room.data.id === room?.id &&
+            item.attributes.checkIn &&
+            item.attributes.checkOut
+          );
+        })
+        .some((item: any) => {
+          try {
+            const existingCheckIn = new Date(item.attributes.checkIn).setHours(
+              0,
+              0,
+              0,
+              0
+            );
+            const existingCheckOut = new Date(
+              item.attributes.checkOut
+            ).setHours(0, 0, 0, 0);
 
-        //convert selected check-in date to midnight
-        const checkInTime = checkInDate?.setHours(0, 0, 0, 0);
-        //convert existing check-out date to midnight
-        const checkOutTime = checkOutDate?.setHours(0, 0, 0, 0);
+            const checkInTime = checkInDate.setHours(0, 0, 0, 0);
+            const checkOutTime = checkOutDate.setHours(0, 0, 0, 0);
 
-        //check if the room is reserved between the check in and check-out date
-        const isReservedBetweenDates =
-          (checkInTime >= existingCheckIn && checkInTime < existingCheckOut) ||
-          (checkOutTime > existingCheckIn &&
-            checkOutTime <= existingCheckOut) ||
-          (existingCheckIn > checkInTime && existingCheckIn < checkOutTime) ||
-          (existingCheckOut > checkInTime && existingCheckOut <= checkOutTime);
+            // Check if the room is reserved between the check-in and check-out date
+            const isReservedBetweenDates =
+              (checkInTime >= existingCheckIn &&
+                checkInTime < existingCheckOut) ||
+              (checkOutTime > existingCheckIn &&
+                checkOutTime <= existingCheckOut) ||
+              (existingCheckIn > checkInTime &&
+                existingCheckIn < checkOutTime) ||
+              (existingCheckOut > checkInTime &&
+                existingCheckOut <= checkOutTime);
 
-        return isReservedBetweenDates; //return true if any reservations overlapped with selected date.
-      });
+            return isReservedBetweenDates;
+          } catch (dateError) {
+            console.log("Error processing reservation dates:", dateError);
+            return false; // Skip this reservation if there's a date parsing error
+          }
+        });
 
-    //if the room is reserved, log a message; otherwise proceed with booking
+      // If the room is reserved, show error and return
+      if (isReserved) {
+        setAlertMessage({
+          message:
+            "This room is already booked for the selected dates. Please choose different dates or another room.",
+          type: "error",
+        });
+        return;
+      }
+    }
 
-    if (isReserved) {
-      setAlertMessage({
-        message:
-          "This room is already booked for the selected dates. Please choose different dates or another room.",
-        type: "error",
-      });
-      return
-    } 
-    else {
-      const data = {
-        data: {
-          firstname: userData.given_name,
-          lastname: userData.family_name,
-          email: userData.email,
-          //format selected check-in date
-          checkIn: checkInDate ? formatDateForStrapi(checkInDate) : null,
-          //format selected check-in date
-          checkOut: checkOutDate ? formatDateForStrapi(checkOutDate) : null,
-          room: room?.id,
-        },
-      };
+    // Proceed with booking
+    const data = {
+      data: {
+        firstname: userData.given_name,
+        lastname: userData.family_name,
+        email: userData.email,
+        checkIn: checkInDate ? formatDateForStrapi(checkInDate) : null,
+        checkOut: checkOutDate ? formatDateForStrapi(checkOutDate) : null,
+        room: room?.id,
+      },
+    };
 
-      //post booking data to the server
-      postData("http://127.0.0.1:1337/api/reservations", data);
+    try {
+      await postData("http://127.0.0.1:1337/api/reservations", data);
+
       setAlertMessage({
         message:
           "Your booking has been successfully confirmed! We look forward to welcoming you on your selected dates.",
         type: "success",
       });
-      //refresh the page to reflect the updates reservation status
+
+      // Reset form after successful booking
+      setCheckInDate(undefined);
+      setCheckOutDate(undefined);
+
       router.refresh();
+    } catch (error) {
+      setAlertMessage({
+        message: "Failed to make reservation. Please try again.",
+        type: "error",
+      });
     }
   };
 
@@ -215,7 +243,6 @@ const Reservation = ({
                 <Button
                   variant="outline"
                   size={"lg"}
-                  data-empty={!checkOutDate}
                   className={cn(
                     "w-full justify-start text-left font-normal bg-white border-gray-300 hover:bg-gray-50 transition-colors",
                     !checkOutDate && "text-gray-400"
@@ -245,16 +272,21 @@ const Reservation = ({
             </Popover>
           </div>
 
-          {/* Conditional rendering of the booking button, based on user auth status. if user authenticated, display button "Book now" with onClick event Handler.
-          If user not auth'd, display Book Now button wrap inside login link*/}
-
+          {/* Conditional rendering of the booking button */}
           {isUserAuthenticated ? (
-            <Button onClick={() => saveReservation()} size="md">
+            <Button
+              onClick={() => saveReservation()}
+              size="lg"
+              className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 mt-4 transition-colors duration-200 shadow-sm"
+            >
               Book Now
             </Button>
           ) : (
             <LoginLink>
-              <Button className="w-full" size="md">
+              <Button
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 mt-4 transition-colors duration-200 shadow-sm"
+                size="lg"
+              >
                 Book Now
               </Button>
             </LoginLink>

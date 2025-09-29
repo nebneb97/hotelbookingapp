@@ -5,51 +5,27 @@ import {
   FaExclamationTriangle,
 } from "react-icons/fa";
 
-const AlertMessage = ({
-  message,
-  type,
-}: {
-  message: string;
-  type: "error" | "success";
-}) => {
-  const getIcon = () => {
-    switch (type) {
-      case "success":
-        return <FaCheckCircle />;
-      case "error":
-        return <FaExclamationTriangle />;
-      default:
-        return <FaInfoCircle />;
-    }
-  };
-
-  const getBackgroundColor = () => {
-    switch (type) {
-      case "success":
-        return "bg-green-500";
-      case "error":
-        return "bg-red-500";
-      default:
-        return "bg-blue-500";
-    }
-  };
-
+const AlertMessage = ({ message, type }) => {
   return (
-    <Alert
-      className={`rounded-md shadow-md border-0 ${getBackgroundColor()} text-white`}
+    <div 
+      style={{ 
+        backgroundColor: type === 'success' ? '#10b981' : '#ef4444',
+        color: 'white',
+        padding: '16px',
+        borderRadius: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+      }}
     >
-      <div className="flex items-center gap-3">
-        <div className="flex-shrink-0 text-xl w-[44px] h-[44px] flex justify-center items-center bg-white bg-opacity-20 rounded-full">
-          {getIcon()}
-        </div>
-        <AlertTitle
-          style={{ color: "white" }}
-          className="flex-1 text-base leading-relaxed font-medium break-words"
-        >
-          {message}
-        </AlertTitle>
+      <div style={{ fontSize: '18px' }}>
+        {type === 'success' ? '✓' : '⚠'}
       </div>
-    </Alert>
+      <div style={{ fontSize: '16px', fontWeight: '500' }}>
+        {message}
+      </div>
+    </div>
   );
 };
 
