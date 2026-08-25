@@ -1,16 +1,28 @@
 import RoomsList from "./RoomList";
+import { api } from "@/lib/api";
+
+interface Room {
+  id: number;
+  documentId: string;
+  title: string;
+  type: string;
+  price: number;
+  capacity: number;
+  image?: { url: string };
+}
 
 const getRooms = async () => {
-  // This function can be used to fetch rooms data if needed
-  const res = await fetch(`http://127.0.0.1:1337/api/rooms?populate=*`, {
-    next: { revalidate: 0 },
-  });
-
-  return await res.json();
+  try {
+    return await api.get<{ data: Room[] }>(`/api/rooms?populate=*`, {
+      cache: "no-store",
+    } as RequestInit);
+  } catch {
+    return { data: [] as Room[] };
+  }
 };
+
 const Rooms = async () => {
   const rooms = await getRooms();
-  console.log(rooms);
   return (
     <section>
       <div className="container mx-auto">

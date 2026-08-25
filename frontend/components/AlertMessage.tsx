@@ -1,11 +1,5 @@
-import { Alert, AlertTitle } from "./ui/alert";
-import {
-  FaInfoCircle,
-  FaCheckCircle,
-  FaExclamationTriangle,
-} from "react-icons/fa";
 
-const AlertMessage = ({ message, type }) => {
+const AlertMessage = ({ message, type }: { message: string; type: "success" | "error" }) => {
   return (
     <div 
       style={{ 

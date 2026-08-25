@@ -1,0 +1,26 @@
+{
+  "name": "hbookingapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently --names \"backend,frontend\" --prefix-colors \"yellow,cyan\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "backend": "npm run dev --prefix backend",
+    "frontend": "npm run dev --prefix frontend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nebneb97/hotelbookingapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nebneb97/hotelbookingapp/issues"
+  },
+  "homepage": "https://github.com/nebneb97/hotelbookingapp#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

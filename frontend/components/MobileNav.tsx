@@ -3,7 +3,7 @@
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 import Link from "next/link";
-import path from "path";
+
 import { FaBars } from "react-icons/fa";
 
 const links = [

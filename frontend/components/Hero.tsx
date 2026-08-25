@@ -1,4 +1,3 @@
-import { Button } from "./ui/button"
 
 const Hero = () => {
   return (
@@ -8,7 +7,8 @@ const Hero = () => {
                 <h1 className="text-4xl lg:text-7xl font-serif text-white text-center max-w-[800px] mb-10">
                     Experience hospitality at its finest with TheBooker
                 </h1>
-                <Button size='lg'> Discover More</Button>
+                <div></div>
+                {/* <Button size='lg'> Discover More</Button> */}
             </div>
         </div>
     </section>

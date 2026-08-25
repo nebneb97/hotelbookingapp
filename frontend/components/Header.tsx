@@ -26,7 +26,6 @@ const Header = async () => {
   const isUserAuthenticated = (await isAuthenticated()) ?? false;
 
   const user = await getUser();
-  console.log("user from header", user);
 
   return (
     <header className=" py-6 shadow-md bg-slate-900 text-white">

@@ -2,56 +2,54 @@ import Reservation from "@/components/Reservation";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import Image from "next/image";
 import { TbArrowsMaximize, TbUsers } from "react-icons/tb";
+import { api } from "@/lib/api";
 
-// Fetch room data by documentId (NOT numeric id)
-const getRoomData = async (params: any) => {
-  if (typeof params?.then === "function") params = await params;
+interface Room {
+  id: number;
+  documentId: string;
+  title: string;
+  price: number;
+  capacity: number;
+  size: string;
+  description: string;
+  image?: { url: string };
+}
 
-  // Debug: Log the params to ensure the correct documentId is being passed
-  console.log("RoomDetails params:", params);
+interface ReservationEntry {
+  id: number;
+  checkIn: string;
+  checkOut: string;
+  room?: { id: number };
+}
 
-  // Fetch by documentId
-  const res = await fetch(
-    `http://127.0.0.1:1337/api/rooms?filters[documentId][$eq]=${params.id}&populate=*`,
-    { next: { revalidate: 0 } }
+const getRoomData = async (params: { id: string }) =>
+  api.get<{ data: Room[] }>(
+    `/api/rooms?filters[documentId][$eq]=${params.id}&populate=*`,
+    { next: { revalidate: 0 } } as RequestInit
   );
-  const json = await res.json();
 
-  // Debug: Log the API response to inspect its shape
-  console.log("RoomDetails API response:", JSON.stringify(json, null, 2));
+const getReservationData = async () =>
+  api.get<{ data: ReservationEntry[] }>(
+    `/api/reservations?populate[room][populate]=*`,
+    { next: { revalidate: 0 } } as RequestInit
+  );
 
-  return json;
-};
+const RoomDetails = async ({ params }: { params: Promise<{ id: string }> }) => {
+  const resolvedParams = await params;
 
-const getReservationData = async () => {
-  const res = await fetch(`http://127.0.0.1:1337/api/reservations?populate=*`, {
-    next: { revalidate: 0 },
-  });
-  return await res.json();
-};
+  const [roomRes, reservationRes] = await Promise.all([
+    getRoomData(resolvedParams),
+    getReservationData(),
+  ]);
 
-const RoomDetails = async ({ params }: { params: any }) => {
-  // Defensive: Await params if it's a Promise
-  if (typeof params?.then === "function") params = await params;
-
-  const roomRes = await getRoomData(params);
-  const reservationRes = await getReservationData();
   const { isAuthenticated, getUser } = getKindeServerSession();
-  const isUserAuthenticated = await isAuthenticated();
+  const isUserAuthenticated = (await isAuthenticated()) ?? false;
   const userData = await getUser();
 
-  // Handle the response structure - your API returns array format for filtering
   if (!roomRes.data || roomRes.data.length === 0) {
     return (
       <section className="min-h-[80vh] flex items-center justify-center">
         <div className="text-center">
-          <Image
-            src="/assets/Code Kid.jpg"
-            alt="Room not found"
-            width={300}
-            height={200}
-            className="mx-auto mb-4"
-          />
           <h2 className="text-2xl font-bold mb-2">Room not found</h2>
           <p className="text-gray-600">
             Sorry, the room you are looking for does not exist.
@@ -60,32 +58,21 @@ const RoomDetails = async ({ params }: { params: any }) => {
       </section>
     );
   }
-  const room = roomRes.data[0];
 
-  // Handle the image structure
-  let imgURL = "/assets/Code Kid.jpg";
-  if (room.image?.url) {
-    imgURL = `http://127.0.0.1:1337${room.image.url}`;
-  }
+  const room = roomRes.data[0];
+  const imgURL = room.image?.url ? api.imageUrl(room.image.url) : null;
 
   return (
     <section className="min-h-[80vh]">
       <div className="container mx-auto py-8">
         <div className="flex flex-col lg:flex-row lg:gap-10 h-full">
-          {/* Room Image */}
           <div className="flex-1">
-            <div className="relative h-[360px] lg:h-[420px] mb-8">
-              <Image
-                src={imgURL}
-                fill
-                alt=""
-                // width={700}
-                // height={500}
-                className="object-cover"
-              />
-            </div>
+            {imgURL && (
+              <div className="relative h-[360px] lg:h-[420px] mb-8">
+                <Image src={imgURL} fill alt={room.title || "Room"} className="object-cover" />
+              </div>
+            )}
             <div className="flex flex-col flex-1 mb-8">
-              {/* Room Title and Price*/}
               <div className="flex justify-between items-end mb-4 gap-2">
                 <h1 className="text-3xl font-bold mb-0">
                   {room.title || "Untitled Room"}
@@ -101,7 +88,6 @@ const RoomDetails = async ({ params }: { params: any }) => {
                   )}
                 </p>
               </div>
-              {/* Room Info*/}
               <div className="flex items-center gap-8 mb-4">
                 <div className="flex items-center gap-2">
                   <div className="text-orange-600 text-2xl">
@@ -116,13 +102,12 @@ const RoomDetails = async ({ params }: { params: any }) => {
                   <p>{room.capacity || "N/A"} Guests</p>
                 </div>
               </div>
-
               <p className="text-lg text-gray-700 max-w-2xl leading-relaxed">
                 {room.description || "No description available."}
               </p>
             </div>
           </div>
-          {/* Reservation Section */}
+
           <div className="w-full lg:max-w-[360px] h-max">
             <Reservation
               reservations={reservationRes}

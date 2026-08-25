@@ -18,21 +18,23 @@ import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs";
 
 import { FaCalendarCheck, FaHome, FaSignOutAlt } from "react-icons/fa";
 
-const Dropdown = ({ user }: { user: any }) => {
-  console.log("user:", user);
-  console.log("user picture URL:", user?.picture); // Debug the picture URL
-  
+interface KindeUser {
+  given_name?: string | null;
+  family_name?: string | null;
+  email?: string | null;
+  picture?: string | null;
+}
+
+const Dropdown = ({ user }: { user: KindeUser | null }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div className="flex items-center gap-3 cursor-pointer">
           {/* FIXED: Avatar with better error handling */}
           <Avatar>
-            <AvatarImage 
-              src={user?.picture} 
+            <AvatarImage
+              src={user?.picture ?? undefined}
               alt={`${user?.given_name} ${user?.family_name}`}
-              // Add onError handler to debug image loading issues
-              onError={(e) => console.error("Avatar image failed to load:", e)}
             />
             <AvatarFallback className="bg-orange-700 text-white">
               {user?.given_name?.[0] || ''}
