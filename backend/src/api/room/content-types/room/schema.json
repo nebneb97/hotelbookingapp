@@ -44,6 +44,12 @@
       "relation": "oneToMany",
       "target": "api::reservation.reservation",
       "mappedBy": "room"
+    },
+    "hotel": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::hotel.hotel",
+      "inversedBy": "rooms"
     }
   }
 }

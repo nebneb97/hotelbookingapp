@@ -3,78 +3,60 @@
 import { useState, useEffect } from "react";
 import { Calendar } from "./ui/calendar";
 import { format } from "date-fns";
-
-const getBlockedDates = async (roomId: number) => {
-  const res = await fetch(
-    `http://127.0.0.1:1337/api/reservations?filters[room]=${roomId}&populate=*`,
-    {
-      cache: "no-store",
-    }
-  );
-  
-  const data = await res.json();
-
-  const blockedDates: Date[] = [];
-  data.data?.forEach((reservation: { checkIn: string; checkOut: string }) => {
-    const checkIn = new Date(reservation.checkIn);
-    const checkOut = new Date(reservation.checkOut);
-    
-    // Add all dates between check-in and check-out
-    for (let d = new Date(checkIn); d <= checkOut; d.setDate(d.getDate() + 1)) {
-      blockedDates.push(new Date(d));
-    }
-  });
-  
-  return blockedDates;
-};
+import { api } from "@/lib/api";
 
 const AvailabilityCalendar = ({ roomId }: { roomId: number }) => {
   const [blockedDates, setBlockedDates] = useState<Date[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getBlockedDates(roomId).then((dates) => {
-      setBlockedDates(dates);
-      setLoading(false);
-    });
+    api
+      .get<{ data: Array<{ checkIn: string; checkOut: string }> }>(
+        `/api/reservations?filters[room]=${roomId}&populate=*`,
+        { cache: "no-store" } as RequestInit
+      )
+      .then((data) => {
+        const dates: Date[] = [];
+        data.data?.forEach(({ checkIn, checkOut }) => {
+          const start = new Date(checkIn);
+          const end = new Date(checkOut);
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            dates.push(new Date(d));
+          }
+        });
+        setBlockedDates(dates);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [roomId]);
 
-  const isDateBlocked = (date: Date) => {
-    return blockedDates.some(
-      (blockedDate) =>
-        format(blockedDate, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+  const isDateBlocked = (date: Date) =>
+    blockedDates.some(
+      (b) => format(b, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
     );
-  };
 
-  if (loading) {
-    return <div>Loading availability...</div>;
-  }
+  if (loading) return <p className="text-sm text-gray-500">Loading availability...</p>;
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Room Availability</h3>
+    <div className="space-y-3">
+      <h3 className="text-base font-semibold text-gray-800">Room Availability</h3>
       <Calendar
         mode="single"
-        className="rounded-md border"
+        className="rounded-md border bg-white"
         disabled={isDateBlocked}
-        modifiers={{
-          booked: blockedDates,
-        }}
+        modifiers={{ booked: blockedDates }}
         modifiersStyles={{
-          booked: {
-            backgroundColor: "#fee2e2",
-            color: "#991b1b",
-          },
+          booked: { backgroundColor: "#fee2e2", color: "#991b1b" },
         }}
       />
-      <div className="flex gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-100 border border-green-500 rounded"></div>
-          <span>Available</span>
+      <div className="flex gap-4 text-xs text-gray-600">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 bg-green-100 border border-green-500 rounded" />
+          Available
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-red-100 border border-red-500 rounded"></div>
-          <span>Booked</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 bg-red-100 border border-red-500 rounded" />
+          Booked
         </div>
       </div>
     </div>

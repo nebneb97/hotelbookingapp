@@ -1,4 +1,5 @@
 import Reservation from "@/components/Reservation";
+import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import Image from "next/image";
 import { TbArrowsMaximize, TbUsers } from "react-icons/tb";
@@ -108,13 +109,14 @@ const RoomDetails = async ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
           </div>
 
-          <div className="w-full lg:max-w-[360px] h-max">
+          <div className="w-full lg:max-w-[360px] space-y-6">
             <Reservation
               reservations={reservationRes}
               room={room}
               isUserAuthenticated={isUserAuthenticated}
               userData={userData}
             />
+            <AvailabilityCalendar roomId={room.id} />
           </div>
         </div>
       </div>
