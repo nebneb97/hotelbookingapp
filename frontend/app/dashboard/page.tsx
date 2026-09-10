@@ -21,6 +21,7 @@ import {
 import EditReservation from "@/components/EditReservations";
 import BookingReceipt from "@/components/BookingReceipt";
 import { api } from "@/lib/api";
+import { BedDouble, CalendarDays, Hotel, ArrowRight, PhoneCall } from "lucide-react";
 
 interface Room {
   documentId: string;
@@ -55,14 +56,17 @@ const deleteReservation = (reservationDocumentId: string, userEmail: string) =>
     headers: { email: userEmail },
   });
 
+const STATUS_STYLES = {
+  upcoming: "bg-blue-50 text-blue-700 border border-blue-200",
+  active: "bg-green-50 text-green-700 border border-green-200",
+  completed: "bg-gray-100 text-gray-500 border border-gray-200",
+};
+
 const Dashboard = () => {
   const { user, isAuthenticated, isLoading } = useKindeBrowserClient();
   const [userReservations, setUserReservations] = useState<{ data: Reservation[] } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [alertMessage, setAlertMessage] = useState<{
-    message: string;
-    type: "error" | "success";
-  } | null>(null);
+  const [alertMessage, setAlertMessage] = useState<{ message: string; type: "error" | "success" } | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const fetchReservations = useCallback(async () => {
@@ -71,20 +75,14 @@ const Dashboard = () => {
       const data = await getUserReservations(user.email);
       setUserReservations(data);
     } catch {
-      setAlertMessage({
-        message: "Failed to load your reservations. Please try again.",
-        type: "error",
-      });
+      setAlertMessage({ message: "Failed to load your reservations. Please try again.", type: "error" });
     }
   }, [user?.email]);
 
   useEffect(() => {
     const load = async () => {
       if (isLoading) return;
-      if (!isAuthenticated || !user?.email) {
-        setLoading(false);
-        return;
-      }
+      if (!isAuthenticated || !user?.email) { setLoading(false); return; }
       await fetchReservations();
       setLoading(false);
     };
@@ -102,16 +100,10 @@ const Dashboard = () => {
     setCancellingId(reservationDocumentId);
     try {
       await deleteReservation(reservationDocumentId, user.email);
-      setAlertMessage({
-        message: "Your reservation has been successfully cancelled.",
-        type: "success",
-      });
+      setAlertMessage({ message: "Your reservation has been successfully cancelled.", type: "success" });
       await fetchReservations();
     } catch {
-      setAlertMessage({
-        message: "Failed to cancel reservation. Please try again.",
-        type: "error",
-      });
+      setAlertMessage({ message: "Failed to cancel reservation. Please try again.", type: "error" });
     } finally {
       setCancellingId(null);
     }
@@ -132,8 +124,15 @@ const Dashboard = () => {
 
   if (isLoading || loading) {
     return (
-      <section className="min-h-[80vh] flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading your bookings...</p>
+      <section className="min-h-[80vh]">
+        <div className="bg-slate-900 h-36 animate-pulse" />
+        <div className="container mx-auto px-4 py-10">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-64 bg-gray-100 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        </div>
       </section>
     );
   }
@@ -142,224 +141,229 @@ const Dashboard = () => {
     return (
       <section className="min-h-[80vh] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg text-gray-600 mb-4">
-            Please log in to view your bookings.
-          </p>
+          <p className="text-lg text-gray-600 mb-4">Please log in to view your bookings.</p>
           <Link href="/api/auth/login">
-            <Button className="bg-orange-600 hover:bg-orange-700">Login</Button>
+            <Button className="bg-orange-600 hover:bg-orange-700">Sign In</Button>
           </Link>
         </div>
       </section>
     );
   }
 
-  return (
-    <section className="min-h-[80vh]">
-      <div className="container mx-auto py-8">
-        <h3 className="text-2xl font-bold mb-12 border-b pb-4 text-center lg:text-left">
-          My Bookings
-        </h3>
+  const reservations = (userReservations?.data ?? []).filter((r) => r?.checkIn && r?.checkOut);
+  const upcoming = reservations.filter((r) => getReservationStatus(new Date(r.checkIn), new Date(r.checkOut)) === "upcoming");
+  const completed = reservations.filter((r) => getReservationStatus(new Date(r.checkIn), new Date(r.checkOut)) === "completed");
+  const totalNights = completed.reduce((acc, r) => {
+    const nights = Math.ceil((new Date(r.checkOut).getTime() - new Date(r.checkIn).getTime()) / (1000 * 60 * 60 * 24));
+    return acc + nights;
+  }, 0);
 
+  const firstName = user.given_name ?? user.email.split("@")[0];
+  const initials = `${user.given_name?.[0] ?? ""}${user.family_name?.[0] ?? ""}`.toUpperCase() || user.email[0].toUpperCase();
+
+  return (
+    <section className="min-h-[80vh] bg-gray-50">
+
+      {/* Welcome banner */}
+      <div className="bg-slate-900 py-10">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-full bg-orange-600 flex items-center justify-center text-white text-xl font-bold shrink-0">
+              {initials}
+            </div>
+            <div>
+              <p className="text-orange-400 text-sm font-semibold uppercase tracking-widest mb-0.5">Welcome back</p>
+              <h1 className="text-2xl lg:text-3xl font-bold text-white">{firstName}</h1>
+              <p className="text-gray-400 text-sm">{user.email}</p>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 mt-8 max-w-lg">
+            <div className="bg-white/5 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-white">{upcoming.length}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Upcoming</p>
+            </div>
+            <div className="bg-white/5 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-white">{completed.length}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Completed</p>
+            </div>
+            <div className="bg-white/5 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-white">{totalNights}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Nights stayed</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-10">
         {alertMessage && (
           <div className="mb-6">
-            <AlertMessage
-              message={alertMessage.message}
-              type={alertMessage.type}
-            />
+            <AlertMessage message={alertMessage.message} type={alertMessage.type} />
           </div>
         )}
 
-        <div className="space-y-6">
-          {!userReservations?.data || userReservations.data.length < 1 ? (
-            <div className="text-center py-12">
-              <div className="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
-                <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                  No Reservations Found
-                </h4>
-                <p className="text-gray-600 mb-6">
-                  You don&apos;t have any reservations yet. Start by booking a
-                  room!
-                </p>
-                <Link href="/">
-                  <Button className="bg-orange-600 hover:bg-orange-700">
-                    Browse Rooms
-                  </Button>
-                </Link>
+        <h2 className="text-xl font-bold text-gray-900 mb-6">My Bookings</h2>
+
+        {reservations.length === 0 ? (
+          <div className="space-y-6">
+            {/* Empty state */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center shadow-sm max-w-lg mx-auto">
+              <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <BedDouble className="w-8 h-8 text-orange-500" />
               </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">No bookings yet</h3>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                You haven&apos;t made any reservations yet. Browse our hotels and find your perfect stay in Kuala Lumpur.
+              </p>
+              <Link href="/hotels">
+                <Button className="bg-orange-600 hover:bg-orange-500 text-white gap-2">
+                  Browse Hotels <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
             </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {userReservations.data
-                .filter((r: Reservation) => r?.checkIn && r?.checkOut)
-                .map((reservation: Reservation) => {
-                  const checkInDate = new Date(reservation.checkIn);
-                  const checkOutDate = new Date(reservation.checkOut);
 
-                  if (
-                    isNaN(checkInDate.getTime()) ||
-                    isNaN(checkOutDate.getTime())
-                  ) {
-                    return null;
-                  }
+            {/* Quick action cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 max-w-2xl mx-auto">
+              <Link href="/hotels" className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center text-center gap-3 hover:shadow-md hover:border-orange-200 transition-all group">
+                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                  <Hotel className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-gray-900">Browse Hotels</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Find your next stay</p>
+                </div>
+              </Link>
+              <Link href="/hotels?checkIn=&checkOut=" className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center text-center gap-3 hover:shadow-md hover:border-orange-200 transition-all group">
+                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                  <CalendarDays className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-gray-900">Check Availability</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Search by date</p>
+                </div>
+              </Link>
+              <Link href="/contact" className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center text-center gap-3 hover:shadow-md hover:border-orange-200 transition-all group">
+                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                  <PhoneCall className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-gray-900">Contact Us</p>
+                  <p className="text-xs text-gray-500 mt-0.5">We&apos;re here to help</p>
+                </div>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {reservations.map((reservation) => {
+              const checkInDate = new Date(reservation.checkIn);
+              const checkOutDate = new Date(reservation.checkOut);
+              if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) return null;
 
-                  const room = reservation.room;
-                  const status = getReservationStatus(checkInDate, checkOutDate);
-                  const canCancel = canCancelReservation(checkInDate);
-                  const nights = Math.ceil(
-                    (checkOutDate.getTime() - checkInDate.getTime()) /
-                      (1000 * 60 * 60 * 24)
-                  );
+              const room = reservation.room;
+              const status = getReservationStatus(checkInDate, checkOutDate);
+              const canCancel = canCancelReservation(checkInDate);
+              const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
 
-                  return (
-                    <div
-                      key={reservation.documentId}
-                      className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
-                    >
-                      {room?.image?.url && (
-                        <div className="h-48 relative">
-                          <Image
-                            src={api.imageUrl(room.image.url)}
-                            alt={room.title || "Room"}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
+              return (
+                <div key={reservation.documentId} className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                  {room?.image?.url ? (
+                    <div className="h-44 relative shrink-0">
+                      <Image src={api.imageUrl(room.image.url)} alt={room.title || "Room"} fill className="object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                      <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[status]}`}>
+                        {status === "upcoming" ? "Upcoming" : status === "active" ? "Active" : "Completed"}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="h-20 bg-orange-50 flex items-center justify-center shrink-0">
+                      <BedDouble className="w-8 h-8 text-orange-300" />
+                    </div>
+                  )}
+
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <h4 className="font-bold text-gray-900 text-base leading-tight">{room?.title || "Room"}</h4>
+                      {!room?.image?.url && (
+                        <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[status]}`}>
+                          {status === "upcoming" ? "Upcoming" : status === "active" ? "Active" : "Completed"}
+                        </span>
                       )}
+                    </div>
 
-                      <div className="p-6">
-                        <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                          {room?.title || "Room"}
-                        </h4>
-
-                        <div className="mb-4">
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Guest:</span>{" "}
-                            {reservation.firstname} {reservation.lastname}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Email:</span>{" "}
-                            {reservation.email}
-                          </p>
-                        </div>
-
-                        <div className="space-y-2 mb-4">
-                          <div className="flex justify-between text-sm">
-                            <span className="font-medium text-gray-700">Check-in:</span>
-                            <span className="text-gray-900">
-                              {format(checkInDate, "PPP")}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="font-medium text-gray-700">Check-out:</span>
-                            <span className="text-gray-900">
-                              {format(checkOutDate, "PPP")}
-                            </span>
-                          </div>
-                          {room?.price && (
-                            <div className="flex justify-between text-sm font-medium border-t pt-2 mt-2">
-                              <span className="text-gray-700">
-                                Total ({nights} night{nights !== 1 ? "s" : ""}):
-                              </span>
-                              <span className="text-orange-600">
-                                RM {room.price * nights}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mb-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              status === "upcoming"
-                                ? "bg-blue-100 text-blue-800"
-                                : status === "active"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {status === "upcoming"
-                              ? "Upcoming"
-                              : status === "active"
-                              ? "Active"
-                              : "Completed"}
+                    {/* Dates */}
+                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2.5 mb-3">
+                      <div className="text-center">
+                        <p className="text-[10px] text-gray-400 uppercase font-semibold">Check-in</p>
+                        <p className="text-sm font-bold text-gray-900">{format(checkInDate, "d MMM")}</p>
+                        <p className="text-[10px] text-gray-400">{format(checkInDate, "yyyy")}</p>
+                      </div>
+                      <div className="flex-1 flex flex-col items-center">
+                        <div className="w-full h-px bg-gray-200 relative">
+                          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] text-gray-400 bg-gray-50 px-1">
+                            {nights}n
                           </span>
                         </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          {room?.documentId && (
-                            <Link href={`/room/${room.documentId}`}>
-                              <Button variant="outline" size="sm">
-                                View Room
-                              </Button>
-                            </Link>
-                          )}
-
-                          {status !== "completed" && room && (
-                            <BookingReceipt
-                              reservation={reservation}
-                              room={room}
-                            />
-                          )}
-
-                          {canCancel && status === "upcoming" && user?.email && (
-                            <EditReservation
-                              reservation={reservation}
-                              userEmail={user.email}
-                              onSuccess={fetchReservations}
-                            />
-                          )}
-
-                          {canCancel && status === "upcoming" && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  disabled={
-                                    cancellingId === reservation.documentId
-                                  }
-                                >
-                                  {cancellingId === reservation.documentId
-                                    ? "Cancelling..."
-                                    : "Cancel"}
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Are you absolutely sure?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will permanently cancel your
-                                    reservation for{" "}
-                                    {room?.title || "this room"}. This action
-                                    cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Dismiss</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() =>
-                                      handleCancelReservation(
-                                        reservation.documentId
-                                      )
-                                    }
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Confirm Cancellation
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-gray-400 uppercase font-semibold">Check-out</p>
+                        <p className="text-sm font-bold text-gray-900">{format(checkOutDate, "d MMM")}</p>
+                        <p className="text-[10px] text-gray-400">{format(checkOutDate, "yyyy")}</p>
                       </div>
                     </div>
-                  );
-                })}
-            </div>
-          )}
-        </div>
+
+                    {/* Guest + total */}
+                    <div className="flex items-center justify-between text-sm mb-4">
+                      <span className="text-gray-500">{reservation.firstname} {reservation.lastname}</span>
+                      {room?.price && (
+                        <span className="font-bold text-orange-600">RM {room.price * nights}</span>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-2 mt-auto pt-3 border-t border-gray-100">
+                      {room?.documentId && (
+                        <Link href={`/room/${room.documentId}`}>
+                          <Button variant="outline" size="sm" className="text-xs">View Room</Button>
+                        </Link>
+                      )}
+                      {status !== "completed" && room && (
+                        <BookingReceipt reservation={reservation} room={room} />
+                      )}
+                      {canCancel && status === "upcoming" && user?.email && (
+                        <EditReservation reservation={reservation} userEmail={user.email} onSuccess={fetchReservations} />
+                      )}
+                      {canCancel && status === "upcoming" && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" className="text-xs" disabled={cancellingId === reservation.documentId}>
+                              {cancellingId === reservation.documentId ? "Cancelling..." : "Cancel"}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel this reservation?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently cancel your reservation for {room?.title || "this room"}. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Dismiss</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleCancelReservation(reservation.documentId)} className="bg-red-600 hover:bg-red-700">
+                                Confirm Cancellation
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );

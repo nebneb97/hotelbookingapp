@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Calendar } from "./ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, isPast } from "date-fns";
+import { format, isPast, differenceInDays } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import {
   Popover,
@@ -25,7 +25,7 @@ interface ReservationEntry {
 
 interface ReservationProps {
   reservations: { data: ReservationEntry[] } | null;
-  room: { id: number; documentId?: string };
+  room: { id: number; documentId?: string; price?: number };
   isUserAuthenticated: boolean;
   userData: { given_name: string | null; family_name: string | null; email: string | null } | null;
 }
@@ -188,6 +188,23 @@ const Reservation = ({
               </PopoverContent>
             </Popover>
           </div>
+
+          {checkInDate && checkOutDate && room.price && differenceInDays(checkOutDate, checkInDate) > 0 && (
+            <div className="bg-white rounded-lg border border-orange-200 p-4 text-sm space-y-2">
+              <div className="flex justify-between text-gray-600">
+                <span>RM {room.price} × {differenceInDays(checkOutDate, checkInDate)} night{differenceInDays(checkOutDate, checkInDate) > 1 ? "s" : ""}</span>
+                <span>RM {room.price * differenceInDays(checkOutDate, checkInDate)}</span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Service fee</span>
+                <span>RM 0</span>
+              </div>
+              <div className="border-t border-orange-100 pt-2 flex justify-between font-bold text-gray-900">
+                <span>Total</span>
+                <span className="text-orange-600">RM {room.price * differenceInDays(checkOutDate, checkInDate)}</span>
+              </div>
+            </div>
+          )}
 
           {isUserAuthenticated ? (
             <Button

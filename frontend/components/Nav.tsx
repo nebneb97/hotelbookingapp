@@ -4,8 +4,7 @@ import { redirect, usePathname } from "next/navigation";
 
 const links = [
   { name: "Home", path: "/" },
-  { name: "Restaurant", path: "/restaurant" },
-  { name: "Pool", path: "/pool" },
+  { name: "Hotels", path: "/hotels" },
   { name: "Best Deals", path: "/deals" },
   { name: "Contact", path: "/contact" },
 ];

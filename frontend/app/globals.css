@@ -87,8 +87,15 @@
     --background-tertiary: #1f2937;
   }
 
+  html {
+    background-color: #0f172a;
+    overflow-x: clip;
+  }
+
   body {
     @apply bg-[var(--background)] text-[var(--foreground)] antialiased;
+    overflow-x: clip;
+    width: 100%;
   }
 }
 

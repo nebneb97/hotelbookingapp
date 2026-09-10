@@ -7,6 +7,7 @@ import { TbArrowsMaximize, TbUsers } from "react-icons/tb";
 import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import HotelViewTracker from "@/components/HotelViewTracker";
 
 interface Room {
   id: number;
@@ -65,8 +66,18 @@ const HotelDetailPage = async ({
   const imgUrl = hotel.image?.url ? api.imageUrl(hotel.image.url) : null;
   const rooms = hotel.rooms ?? [];
 
+  const minPrice = rooms.length ? Math.min(...rooms.map((r) => r.price)) : null;
+
   return (
     <section className="min-h-[80vh] pb-16">
+      <HotelViewTracker hotel={{
+        documentId: hotel.documentId,
+        name: hotel.name,
+        city: hotel.city,
+        stars: hotel.stars,
+        minPrice,
+        imageUrl: imgUrl,
+      }} />
       {/* Hotel hero image */}
       <div className="relative h-72 lg:h-[420px] w-full bg-gray-200">
         {imgUrl ? (
@@ -115,29 +126,51 @@ const HotelDetailPage = async ({
             )}
           </div>
 
-          {/* Right — sticky booking hint */}
+          {/* Right — sticky booking widget */}
           <div className="w-full lg:w-72 shrink-0">
-            <div className="bg-orange-50 border border-orange-200 rounded-xl p-5 sticky top-6">
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-5 sticky top-24">
               <p className="text-sm text-gray-500 mb-1">Rooms from</p>
               {rooms.length > 0 ? (
-                <p className="text-3xl font-bold text-orange-600 mb-4">
+                <p className="text-3xl font-bold text-orange-600 mb-1">
                   RM {Math.min(...rooms.map((r) => r.price))}
                   <span className="text-base font-normal text-gray-500">/night</span>
                 </p>
               ) : (
                 <p className="text-gray-400 mb-4">No rooms available</p>
               )}
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 mb-4">
                 {checkIn && checkOut
                   ? `Showing availability for your selected dates`
                   : `Select dates below to check availability`}
               </p>
+              {rooms.length > 0 && (
+                <a
+                  href="#rooms"
+                  className="block w-full text-center bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm mb-4"
+                >
+                  View Rooms
+                </a>
+              )}
+              <div className="border-t border-orange-200 pt-4 space-y-2.5">
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <FaCheckCircle className="text-green-500 shrink-0" />
+                  Free cancellation available
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <FaCheckCircle className="text-green-500 shrink-0" />
+                  No credit card required to browse
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <FaCheckCircle className="text-green-500 shrink-0" />
+                  Instant confirmation
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Rooms */}
-        <div className="mt-8">
+        <div id="rooms" className="mt-8">
           <h2 className="text-2xl font-bold mb-6">
             {rooms.length > 0 ? `Available Rooms (${rooms.length})` : "Rooms"}
           </h2>

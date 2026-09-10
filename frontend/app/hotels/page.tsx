@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import HotelCard, { type Hotel } from "@/components/HotelCard";
+import HotelFilters from "@/components/HotelFilters";
+import SearchBar from "@/components/SearchBar";
 import { api } from "@/lib/api";
 import { format, parseISO, differenceInDays } from "date-fns";
 
@@ -33,20 +36,37 @@ const getBookedRoomIds = async (checkIn: string, checkOut: string): Promise<numb
 const HotelsPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; checkIn?: string; checkOut?: string; guests?: string }>;
+  searchParams: Promise<{
+    city?: string;
+    checkIn?: string;
+    checkOut?: string;
+    guests?: string;
+    stars?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    sort?: string;
+  }>;
 }) => {
-  const { city, checkIn, checkOut, guests } = await searchParams;
+  const { city, checkIn, checkOut, guests, stars, minPrice, maxPrice, sort } =
+    await searchParams;
+
   const guestsNum = Number(guests) || 1;
+  const selectedStars = stars?.split(",").map(Number).filter(Boolean) ?? [];
+  const min = minPrice ? Number(minPrice) : null;
+  const max = maxPrice ? Number(maxPrice) : null;
 
   const { data: allHotels } = await getHotels();
-  const bookedRoomIds = checkIn && checkOut ? await getBookedRoomIds(checkIn, checkOut) : [];
+  const bookedRoomIds =
+    checkIn && checkOut ? await getBookedRoomIds(checkIn, checkOut) : [];
 
-  const filtered = allHotels
+  let filtered = allHotels
     .map((hotel) => {
       const availableRooms = (hotel.rooms ?? []).filter((room) => {
         const hasCapacity = room.capacity >= guestsNum;
         const isAvailable = !bookedRoomIds.includes(room.id);
-        return hasCapacity && (checkIn && checkOut ? isAvailable : true);
+        const aboveMin = min !== null ? room.price >= min : true;
+        const belowMax = max !== null ? room.price <= max : true;
+        return hasCapacity && aboveMin && belowMax && (checkIn && checkOut ? isAvailable : true);
       });
       return { ...hotel, rooms: availableRooms };
     })
@@ -54,19 +74,47 @@ const HotelsPage = async ({
       const matchesCity = city
         ? hotel.city.toLowerCase().includes(city.toLowerCase())
         : true;
+      const matchesStars =
+        selectedStars.length > 0 ? selectedStars.includes(hotel.stars) : true;
       const hasRooms = hotel.rooms.length > 0;
-      return matchesCity && hasRooms;
+      return matchesCity && matchesStars && hasRooms;
     });
 
-  const hasFilters = city || checkIn || checkOut || guests;
+  // Sort
+  if (sort === "price_asc") {
+    filtered.sort((a, b) => {
+      const aMin = Math.min(...(a.rooms ?? []).map((r) => r.price));
+      const bMin = Math.min(...(b.rooms ?? []).map((r) => r.price));
+      return aMin - bMin;
+    });
+  } else if (sort === "price_desc") {
+    filtered.sort((a, b) => {
+      const aMin = Math.min(...(a.rooms ?? []).map((r) => r.price));
+      const bMin = Math.min(...(b.rooms ?? []).map((r) => r.price));
+      return bMin - aMin;
+    });
+  }
+
+  const hasFilters = city || checkIn || checkOut || guests || stars || minPrice || maxPrice;
   const nights =
-    checkIn && checkOut ? differenceInDays(parseISO(checkOut), parseISO(checkIn)) : null;
+    checkIn && checkOut
+      ? differenceInDays(parseISO(checkOut), parseISO(checkIn))
+      : null;
 
   return (
-    <section className="min-h-[80vh] py-12">
-      <div className="container mx-auto px-4">
+    <section className="min-h-[80vh]">
+      {/* Search bar */}
+      <div className="bg-slate-900 py-8">
+        <div className="container mx-auto px-4 flex justify-center">
+          <Suspense fallback={null}>
+            <SearchBar />
+          </Suspense>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-10">
         {/* Results summary */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">
             {city ? `Hotels in ${city}` : "All Hotels"}
           </h1>
@@ -76,7 +124,8 @@ const HotelsPage = async ({
               <>
                 <span>·</span>
                 <span>
-                  {format(parseISO(checkIn), "d MMM")} → {format(parseISO(checkOut), "d MMM yyyy")}
+                  {format(parseISO(checkIn), "d MMM")} →{" "}
+                  {format(parseISO(checkOut), "d MMM yyyy")}
                 </span>
                 {nights && (
                   <>
@@ -94,27 +143,39 @@ const HotelsPage = async ({
             )}
             {hasFilters && (
               <Link href="/hotels" className="text-orange-600 hover:underline ml-2">
-                Clear filters
+                Clear all filters
               </Link>
             )}
           </div>
         </div>
 
-        {filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-xl font-semibold text-gray-700 mb-2">No hotels found</p>
-            <p className="text-gray-500 mb-6">Try adjusting your search — different dates, fewer guests, or a different city.</p>
-            <Link href="/hotels" className="text-orange-600 hover:underline">
-              Clear all filters
-            </Link>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          <Suspense fallback={null}>
+            <HotelFilters />
+          </Suspense>
+
+          {/* Results */}
+          <div className="flex-1">
+            {filtered.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-xl font-semibold text-gray-700 mb-2">No hotels found</p>
+                <p className="text-gray-500 mb-6">
+                  Try adjusting your filters — different dates, fewer guests, or a broader price range.
+                </p>
+                <Link href="/hotels" className="text-orange-600 hover:underline">
+                  Clear all filters
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filtered.map((hotel) => (
+                  <HotelCard key={hotel.documentId} hotel={hotel} nights={nights ?? undefined} />
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filtered.map((hotel) => (
-              <HotelCard key={hotel.documentId} hotel={hotel} />
-            ))}
-          </div>
-        )}
+        </div>
       </div>
     </section>
   );

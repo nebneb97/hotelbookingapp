@@ -1,6 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FaYoutube, FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { RegisterLink, LoginLink } from "@kinde-oss/kinde-auth-nextjs/components";
+import { Button } from "./ui/button";
+import Dropdown from "./Dropdown";
+import MobileNav from "./MobileNav";
+import Nav from "./Nav";
 
 const socials = [
   { icon: <FaYoutube />, href: "#" },
@@ -9,76 +15,70 @@ const socials = [
   { icon: <FaTwitter />, href: "#" },
 ];
 
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import {
-  RegisterLink,
-  LoginLink,
-} from "@kinde-oss/kinde-auth-nextjs/components";
-
-//components
-import { Button } from "./ui/button";
-import Dropdown from "./Dropdown";
-import MobileNav from "./MobileNav";
-import Nav from "./Nav";
-
 const Header = async () => {
   const { isAuthenticated, getUser } = getKindeServerSession();
   const isUserAuthenticated = (await isAuthenticated()) ?? false;
-
   const user = await getUser();
 
   return (
-    <header className=" py-6 shadow-md bg-slate-900 text-white">
+    <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
       <div className="container mx-auto">
-        <div className="flex flex-col md:flex-row md:justify-between gap-6">
-          {/* logo and social icons*/}
-          <div className="flex items-center gap-5 justify-between">
-            {/* logo*/}
-            <Link href={"/"}>
-              <Image src="/TheBooker.png" width={160} height={160} alt="logo" />
+        <div className="flex items-center justify-between h-16 gap-6">
+
+          {/* Left — logo + separator + socials */}
+          <div className="flex items-center gap-4 shrink-0">
+            <Link href="/">
+              <Image
+                src="/TheBooker.png"
+                width={130}
+                height={40}
+                alt="TheBooker"
+                priority
+                style={{ width: "130px", height: "auto" }}
+              />
             </Link>
-            {/* seperator*/}
-            <div className="w-[1px] h-[40px] bg-gray-300"></div>
-            {/*socials*/}
-            <div className="flex gap-2 ">
-              {socials.map((item, index) => {
-                return (
-                  <Link
-                    key={index}
-                    href={item.href}
-                    className="bg-orange-500 text-white hover:bg-orange-600 text-sm w-[28px] h-[28px] flex items-center justify-center rounded-full transition-all"
-                  >
-                    {item.icon}
-                  </Link>
-                );
-              })}
+            <div className="w-px h-8 bg-white/20 hidden sm:block" />
+            <div className="hidden sm:flex gap-1.5">
+              {socials.map((item, i) => (
+                <Link
+                  key={i}
+                  href={item.href}
+                  className="bg-orange-500 hover:bg-orange-400 text-white text-xs w-7 h-7 flex items-center justify-center rounded-full transition-colors"
+                >
+                  {item.icon}
+                </Link>
+              ))}
             </div>
           </div>
-          {/*Sign In and Sign Up*/}
-          <div className="flex items-center justify-center gap-8 xl:w-max">
-            <div className="flex items-center gap-2 xl:order-2">
-              {isUserAuthenticated ? (
-                <Dropdown user={user} />
-              ) : (
-                <div className="flex gap-4">
-                  <LoginLink>
-                    <Button>Sign In</Button>
-                  </LoginLink>
-                  <RegisterLink>
-                    <Button>Register</Button>
-                  </RegisterLink>
-                </div>
-              )}
-            </div>
-            {/*Mobile Nav*/}
-            <div className="xl:hidden  flex items-center">
-              <MobileNav/>
-            </div>
-            {/*Desktop Nav*/}
-            <div className="hidden xl:flex items-center">
-              <Nav isUserAuthenticated={isUserAuthenticated} />
+
+          {/* Center — desktop nav */}
+          <div className="hidden xl:flex flex-1 justify-center">
+            <Nav isUserAuthenticated={isUserAuthenticated} />
+          </div>
+
+          {/* Right — auth + mobile nav */}
+          <div className="flex items-center gap-3 shrink-0">
+            {isUserAuthenticated ? (
+              <Dropdown user={user} />
+            ) : (
+              <div className="hidden sm:flex items-center gap-2">
+                <LoginLink>
+                  <Button variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 text-sm">
+                    Sign In
+                  </Button>
+                </LoginLink>
+                <RegisterLink>
+                  <Button size="sm" className="bg-orange-600 hover:bg-orange-500 text-white text-sm">
+                    Register
+                  </Button>
+                </RegisterLink>
+              </div>
+            )}
+            <div className="xl:hidden">
+              <MobileNav />
             </div>
           </div>
+
         </div>
       </div>
     </header>

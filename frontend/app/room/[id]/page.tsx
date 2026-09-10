@@ -112,7 +112,7 @@ const RoomDetails = async ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="w-full lg:max-w-[360px] space-y-6">
             <Reservation
               reservations={reservationRes}
-              room={room}
+              room={{ ...room, price: room.price }}
               isUserAuthenticated={isUserAuthenticated}
               userData={userData}
             />
