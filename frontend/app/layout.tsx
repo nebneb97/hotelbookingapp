@@ -19,13 +19,39 @@ const urbanist = Urbanist({
 });
 
 export const metadata: Metadata = {
-  title: "TheBooker",
-  description: "Book your stay with TheBooker",
+  metadataBase: new URL("https://thebooker-hotel.vercel.app"),
+  title: {
+    default: "TheBooker — Hotel Booking in Kuala Lumpur",
+    template: "%s | TheBooker",
+  },
+  description: "Book handpicked hotels across Kuala Lumpur. Transparent pricing, instant confirmation, zero hidden fees.",
+  keywords: ["hotel booking", "Kuala Lumpur hotels", "KL accommodation", "book hotel Malaysia", "TheBooker"],
+  openGraph: {
+    type: "website",
+    locale: "en_MY",
+    url: "https://thebooker-hotel.vercel.app",
+    siteName: "TheBooker",
+    title: "TheBooker — Hotel Booking in Kuala Lumpur",
+    description: "Book handpicked hotels across Kuala Lumpur. Transparent pricing, instant confirmation, zero hidden fees.",
+    images: [
+      {
+        url: "/web-app-manifest-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "TheBooker — Hotel Booking in Kuala Lumpur",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "TheBooker — Hotel Booking in Kuala Lumpur",
+    description: "Book handpicked hotels across Kuala Lumpur. Transparent pricing, instant confirmation, zero hidden fees.",
+    images: ["/web-app-manifest-512x512.png"],
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
-      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-96x96.png", type: "image/png", sizes: "96x96" },
     ],
     apple: "/apple-touch-icon.png",
   },

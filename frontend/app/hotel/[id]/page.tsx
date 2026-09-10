@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -45,6 +46,16 @@ const getHotel = async (id: string) => {
     return null;
   }
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const hotel = await getHotel(id);
+  if (!hotel) return { title: "Hotel Not Found" };
+  return {
+    title: `${hotel.name} — ${hotel.city}`,
+    description: hotel.description ?? `Book a room at ${hotel.name} in ${hotel.city}. ${hotel.stars}-star hotel with instant confirmation.`,
+  };
+}
 
 const HotelDetailPage = async ({
   params,

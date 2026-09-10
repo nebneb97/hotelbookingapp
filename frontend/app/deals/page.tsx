@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Best Deals — Save 15% on Hotels",
+  description: "Exclusive hotel deals in Kuala Lumpur. Save 15% on our finest rooms. Limited time offers — book now before they're gone.",
+};
 import Image from "next/image";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";

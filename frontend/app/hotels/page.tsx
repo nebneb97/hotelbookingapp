@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Hotels in Kuala Lumpur",
+  description: "Browse all available hotels in Kuala Lumpur. Filter by dates, guests, star rating and price. Book instantly with no hidden fees.",
+};
 import HotelCard, { type Hotel } from "@/components/HotelCard";
 import HotelFilters from "@/components/HotelFilters";
 import SearchBar from "@/components/SearchBar";

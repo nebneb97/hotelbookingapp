@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Hero from "@/components/Hero";
+
+export const metadata: Metadata = {
+  title: "TheBooker — Hotel Booking in Kuala Lumpur",
+  description: "Discover and book handpicked hotels across Kuala Lumpur. Transparent pricing, instant confirmation, zero hidden fees.",
+};
 import HotelCard, { type Hotel } from "@/components/HotelCard";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import NewsletterForm from "@/components/NewsletterForm";

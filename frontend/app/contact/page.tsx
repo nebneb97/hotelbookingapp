@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import ContactForm from "@/components/ContactForm";
+
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description: "Get in touch with the TheBooker team. We're available 24/7 to help with your hotel bookings in Kuala Lumpur.",
+};
 import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaClock } from "react-icons/fa";
 
 const contactDetails = [
