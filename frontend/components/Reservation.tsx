@@ -38,6 +38,7 @@ const Reservation = ({
 }: ReservationProps) => {
   const [checkInDate, setCheckInDate] = useState<Date>();
   const [checkOutDate, setCheckOutDate] = useState<Date>();
+  const [isLoading, setIsLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState<{
     message: string;
     type: "error" | "success";
@@ -52,6 +53,8 @@ const Reservation = ({
   }, [alertMessage]);
 
   const saveReservation = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
     setAlertMessage(null);
 
     if (!checkInDate || !checkOutDate) {
@@ -112,6 +115,8 @@ const Reservation = ({
       router.refresh();
     } catch {
       setAlertMessage({ message: "Failed to make reservation. Please try again.", type: "error" });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -209,10 +214,11 @@ const Reservation = ({
           {isUserAuthenticated ? (
             <Button
               onClick={saveReservation}
+              disabled={isLoading}
               size="lg"
-              className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 mt-4 transition-colors duration-200 shadow-sm"
+              className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 mt-4 transition-colors duration-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Book Now
+              {isLoading ? "Booking…" : "Book Now"}
             </Button>
           ) : (
             <LoginLink>

@@ -5,6 +5,24 @@ import Image from "next/image";
 import { TbArrowsMaximize, TbUsers } from "react-icons/tb";
 import { api } from "@/lib/api";
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  try {
+    const res = await api.get<{ data: Array<{ title: string; price: number; description: string }> }>(
+      `/api/rooms?filters[documentId][$eq]=${id}&populate=*`,
+      { next: { revalidate: 0 } } as RequestInit
+    );
+    const room = res.data?.[0];
+    if (!room) return { title: "Room Not Found" };
+    return {
+      title: `${room.title} — RM ${room.price}/night`,
+      description: room.description ?? `Book ${room.title} at RM ${room.price} per night. Instant confirmation, no hidden fees.`,
+    };
+  } catch {
+    return { title: "Room" };
+  }
+}
+
 interface Room {
   id: number;
   documentId: string;
@@ -70,7 +88,7 @@ const RoomDetails = async ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="flex-1">
             {imgURL && (
               <div className="relative h-[360px] lg:h-[420px] mb-8">
-                <Image src={imgURL} fill alt={room.title || "Room"} className="object-cover" />
+                <Image src={imgURL} fill sizes="(max-width: 1024px) 100vw, calc(100vw - 420px)" alt={room.title || "Room"} className="object-cover" />
               </div>
             )}
             <div className="flex flex-col flex-1 mb-8">
